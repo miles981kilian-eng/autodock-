@@ -1,9 +1,9 @@
 package com.autodock.app.ui.screens
 
+import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.provider.Settings
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
@@ -22,6 +22,9 @@ import com.autodock.app.service.DockService
 fun HomeScreen() {
     val context = LocalContext.current
     var canDrawOverlays by remember { mutableStateOf(Settings.canDrawOverlays(context)) }
+    
+    val prefs = context.getSharedPreferences("AutoDockPrefs", Context.MODE_PRIVATE)
+    var spotifyAuto by remember { mutableStateOf(prefs.getBoolean("spotify_auto", true)) }
 
     Column(
         modifier = Modifier
@@ -37,8 +40,9 @@ fun HomeScreen() {
             fontWeight = FontWeight.Bold
         )
         
-        Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(24.dp))
         
+        // System Status Card
         Card(
             modifier = Modifier
                 .fillMaxWidth()
@@ -50,26 +54,15 @@ fun HomeScreen() {
                 modifier = Modifier.padding(24.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                Text(
-                    text = "System Status",
-                    style = MaterialTheme.typography.titleMedium,
-                    color = MaterialTheme.colorScheme.onSurface
-                )
+                Text("System Status", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onSurface)
                 Spacer(modifier = Modifier.height(16.dp))
                 
                 if (!canDrawOverlays) {
-                    Text(
-                        text = "Permission Required: Display over other apps (Floating Dock)",
-                        color = MaterialTheme.colorScheme.error,
-                        style = MaterialTheme.typography.bodyMedium
-                    )
+                    Text("Permission Required: Display over other apps", color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodyMedium)
                     Spacer(modifier = Modifier.height(12.dp))
                     Button(
                         onClick = {
-                            val intent = Intent(
-                                Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
-                                Uri.parse("package:${context.packageName}")
-                            )
+                            val intent = Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION, Uri.parse("package:${context.packageName}"))
                             context.startActivity(intent)
                         },
                         colors = ButtonDefaults.buttonColors(containerColor = CyberBlue)
@@ -77,11 +70,7 @@ fun HomeScreen() {
                         Text("Grant Permission", color = MaterialTheme.colorScheme.onPrimary)
                     }
                 } else {
-                    Text(
-                        text = "All Permissions Granted",
-                        color = CyberBlue,
-                        style = MaterialTheme.typography.bodyMedium
-                    )
+                    Text("All Permissions Granted", color = CyberBlue, style = MaterialTheme.typography.bodyMedium)
                     Spacer(modifier = Modifier.height(12.dp))
                     Button(
                         onClick = {
@@ -92,6 +81,44 @@ fun HomeScreen() {
                     ) {
                         Text("Start Dock Service", color = MaterialTheme.colorScheme.onPrimary)
                     }
+                }
+            }
+        }
+        
+        Spacer(modifier = Modifier.height(24.dp))
+        
+        // Smart Automations Card
+        Card(
+            modifier = Modifier
+                .fillMaxWidth()
+                .shadow(8.dp, RoundedCornerShape(16.dp)),
+            colors = CardDefaults.cardColors(containerColor = CardBackground),
+            shape = RoundedCornerShape(16.dp)
+        ) {
+            Column(
+                modifier = Modifier.padding(24.dp),
+                horizontalAlignment = Alignment.Start
+            ) {
+                Text("Smart Automations", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onSurface)
+                Spacer(modifier = Modifier.height(16.dp))
+                
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column {
+                        Text("Auto-Launch Spotify", color = MaterialTheme.colorScheme.onSurface, fontWeight = FontWeight.Medium)
+                        Text("When headphones connect", color = MaterialTheme.colorScheme.onSurface.copy(alpha=0.7f), style = MaterialTheme.typography.bodySmall)
+                    }
+                    Switch(
+                        checked = spotifyAuto,
+                        onCheckedChange = { isChecked ->
+                            spotifyAuto = isChecked
+                            prefs.edit().putBoolean("spotify_auto", isChecked).apply()
+                        },
+                        colors = SwitchDefaults.colors(checkedThumbColor = CyberBlue, checkedTrackColor = CyberBlue.copy(alpha=0.5f))
+                    )
                 }
             }
         }

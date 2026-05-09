@@ -18,7 +18,7 @@ class SystemEventReceiver : BroadcastReceiver() {
             }
             "android.bluetooth.device.action.ACL_CONNECTED" -> {
                 Log.d("AutoDock", "Bluetooth connected!")
-                AutomationEngine.evaluateEvent("BLUETOOTH_CONNECTED")
+                AutomationEngine.evaluateEvent(context, "BLUETOOTH_CONNECTED")
             }
         }
     }

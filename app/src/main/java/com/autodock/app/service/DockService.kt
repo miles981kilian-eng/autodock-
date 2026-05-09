@@ -3,8 +3,11 @@ package com.autodock.app.service
 import android.app.Service
 import android.content.Intent
 import android.graphics.PixelFormat
+import android.graphics.drawable.GradientDrawable
 import android.os.IBinder
 import android.view.Gravity
+import android.view.MotionEvent
+import android.view.View
 import android.view.WindowManager
 import android.widget.FrameLayout
 import android.widget.TextView
@@ -13,6 +16,7 @@ class DockService : Service() {
 
     private lateinit var windowManager: WindowManager
     private lateinit var floatingView: FrameLayout
+    private lateinit var params: WindowManager.LayoutParams
 
     override fun onBind(intent: Intent): IBinder? = null
 
@@ -20,33 +24,69 @@ class DockService : Service() {
         super.onCreate()
         windowManager = getSystemService(WINDOW_SERVICE) as WindowManager
 
-        // Setup a basic MVP Floating View (Cyberpunk Dot)
-        // Note: For fully Jetpack Compose in Service, ViewTreeLifecycleOwner and ViewTreeSavedStateRegistryOwner must be configured.
-        // For MVP, we provide a raw glowing blue dot.
+        // Create a Cyberpunk styled circular dock
         floatingView = FrameLayout(this).apply {
-            setBackgroundColor(android.graphics.Color.parseColor("#00F0FF")) // CyberBlue
-            alpha = 0.8f
+            val shape = GradientDrawable().apply {
+                shape = GradientDrawable.OVAL
+                setColor(android.graphics.Color.parseColor("#0F172A")) // DarkBackground
+                setStroke(6, android.graphics.Color.parseColor("#00F0FF")) // CyberBlue border
+            }
+            background = shape
+            alpha = 0.9f
         }
 
-        val params = WindowManager.LayoutParams(
-            150, // Width
-            150, // Height
+        params = WindowManager.LayoutParams(
+            180, // Width
+            180, // Height
             WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,
             WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE,
             PixelFormat.TRANSLUCENT
         )
 
-        params.gravity = Gravity.CENTER_VERTICAL or Gravity.END
+        params.gravity = Gravity.TOP or Gravity.START
         params.x = 20
-        params.y = 0
+        params.y = 100
 
         val textView = TextView(this).apply {
             text = "DOCK"
-            setTextColor(android.graphics.Color.BLACK)
-            textSize = 10f
+            setTextColor(android.graphics.Color.parseColor("#00F0FF"))
+            textSize = 14f
             gravity = Gravity.CENTER
+            setPadding(0,0,0,0)
         }
-        floatingView.addView(textView)
+        
+        val layoutParams = FrameLayout.LayoutParams(
+            FrameLayout.LayoutParams.MATCH_PARENT,
+            FrameLayout.LayoutParams.MATCH_PARENT
+        )
+        floatingView.addView(textView, layoutParams)
+
+        // Implement Dragging Logic
+        floatingView.setOnTouchListener(object : View.OnTouchListener {
+            private var initialX = 0
+            private var initialY = 0
+            private var initialTouchX = 0f
+            private var initialTouchY = 0f
+
+            override fun onTouch(v: View?, event: MotionEvent?): Boolean {
+                when (event?.action) {
+                    MotionEvent.ACTION_DOWN -> {
+                        initialX = params.x
+                        initialY = params.y
+                        initialTouchX = event.rawX
+                        initialTouchY = event.rawY
+                        return true
+                    }
+                    MotionEvent.ACTION_MOVE -> {
+                        params.x = initialX + (event.rawX - initialTouchX).toInt()
+                        params.y = initialY + (event.rawY - initialTouchY).toInt()
+                        windowManager.updateViewLayout(floatingView, params)
+                        return true
+                    }
+                }
+                return false
+            }
+        })
 
         windowManager.addView(floatingView, params)
     }
