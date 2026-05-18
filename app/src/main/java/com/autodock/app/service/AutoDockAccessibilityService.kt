@@ -42,6 +42,6 @@ class AutoDockAccessibilityService : AccessibilityService() {
     
     // Example global action trigger for custom gestures
     fun triggerRecentApps() {
-        performGlobalAction(GLOBAL_ACTION_RECENTS)
+        performGlobalAction(AccessibilityService.GLOBAL_ACTION_RECENTS)
     }
 }
