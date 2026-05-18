@@ -27,6 +27,12 @@ jobs:
         with:
           gradle-version: '8.2'
 
+      - name: Persist Android Signature
+        uses: actions/cache@v4
+        with:
+          path: ~/.android/debug.keystore
+          key: autodock-persistent-keystore
+
       - name: Build Debug APK (Installable)
         run: gradle assembleDebug
 
