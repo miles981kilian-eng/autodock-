@@ -9,7 +9,7 @@ import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalView
 
 private val AutoDockColorScheme = darkColorScheme(
-    primary = NeonBlue,
+    primary = CyberBlue,
     secondary = GlassSurface,
     tertiary = BorderGlow,
     background = DeepGraphite,
