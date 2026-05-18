@@ -18,7 +18,7 @@ class AutoDockAccessibilityService : AccessibilityService() {
         val info = AccessibilityServiceInfo()
         info.eventTypes = AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED or AccessibilityEvent.TYPE_WINDOW_CONTENT_CHANGED
         info.feedbackType = AccessibilityServiceInfo.FEEDBACK_GENERIC
-        info.flags = AccessibilityServiceInfo.FLAG_DEFAULT
+        info.flags = AccessibilityServiceInfo.DEFAULT
         this.serviceInfo = info
         Log.d("AutoDockAccessibility", "Accessibility Service Connected!")
     }
