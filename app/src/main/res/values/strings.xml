@@ -1,3 +1,4 @@
 <resources>
     <string name="app_name">AutoDock</string>
+    <string name="accessibility_service_description">AutoDock uses Accessibility Services to enable edge-swipe gestures, floating dock interaction, and universal quick actions (like turning on battery saver or opening recent apps) from anywhere on your device. AutoDock does not collect or transmit any of your personal data.</string>
 </resources>
