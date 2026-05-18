@@ -12,13 +12,27 @@ class SystemEventReceiver : BroadcastReceiver() {
         Log.d("AutoDock", "Received system event: $action")
 
         when (action) {
-            Intent.ACTION_BOOT_COMPLETED -> {
-                Log.d("AutoDock", "Boot completed! Initializing dock if permissions exist.")
-                // Start DockService
-            }
-            "android.bluetooth.device.action.ACL_CONNECTED" -> {
-                Log.d("AutoDock", "Bluetooth connected!")
-                AutomationEngine.evaluateEvent(context, "BLUETOOTH_CONNECTED")
+            Intent.ACTION_BOOT_COMPLETED,
+            Intent.ACTION_MY_PACKAGE_REPLACED -> {
+                Log.d("AutoDock", "System event: $action. Starting AutomationService...")
+                
+                val serviceIntent = Intent(context, com.autodock.app.service.AutomationService::class.java)
+                if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+                    context.startForegroundService(serviceIntent)
+                } else {
+                    context.startService(serviceIntent)
+                }
+
+                // Schedule watchdog
+                val workRequest = androidx.work.PeriodicWorkRequestBuilder<com.autodock.app.automation.AutomationWorker>(
+                    15, java.util.concurrent.TimeUnit.MINUTES
+                ).build()
+                
+                androidx.work.WorkManager.getInstance(context).enqueueUniquePeriodicWork(
+                    "AutomationWatchdog",
+                    androidx.work.ExistingPeriodicWorkPolicy.KEEP,
+                    workRequest
+                )
             }
         }
     }

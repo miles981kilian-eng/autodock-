@@ -8,7 +8,6 @@ object AutomationEngine {
 
     fun evaluateEvent(context: Context, event: String) {
         Log.d("AutomationEngine", "Evaluating event: $event")
-        
         val prefs = context.getSharedPreferences("AutoDockPrefs", Context.MODE_PRIVATE)
         
         when (event) {
@@ -17,7 +16,7 @@ object AutomationEngine {
                 if (isSpotifyEnabled) {
                     executeAction(context, "OPEN_SPOTIFY")
                 } else {
-                    Log.d("AutomationEngine", "Spotify automation is disabled by user.")
+                    logFailed(context, "Spotify automation disabled by user.")
                 }
             }
             "BATTERY_LOW" -> {
@@ -35,17 +34,29 @@ object AutomationEngine {
                     if (intent != null) {
                         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
                         context.startActivity(intent)
-                        Log.d("AutomationEngine", "Successfully launched Spotify.")
+                        logSuccess(context, "Launched Spotify")
                     } else {
-                        Log.e("AutomationEngine", "Spotify is not installed.")
+                        logFailed(context, "Spotify not installed")
                     }
                 } catch (e: Exception) {
-                    Log.e("AutomationEngine", "Failed to launch Spotify: ${e.message}")
+                    logFailed(context, "Error: ${e.message}")
                 }
             }
             "TURN_ON_BATTERY_SAVER" -> {
-                Log.d("AutomationEngine", "Battery saver action triggered.")
+                logSuccess(context, "Battery saver triggered")
             }
         }
+    }
+
+    private fun logSuccess(context: Context, msg: String) {
+        val prefs = context.getSharedPreferences("AutoDockPrefs", Context.MODE_PRIVATE)
+        prefs.edit().putString("last_successful_automation", msg).apply()
+        Log.d("AutomationEngine", "SUCCESS: $msg")
+    }
+
+    private fun logFailed(context: Context, msg: String) {
+        val prefs = context.getSharedPreferences("AutoDockPrefs", Context.MODE_PRIVATE)
+        prefs.edit().putString("last_failed_automation", msg).apply()
+        Log.e("AutomationEngine", "FAILED: $msg")
     }
 }
