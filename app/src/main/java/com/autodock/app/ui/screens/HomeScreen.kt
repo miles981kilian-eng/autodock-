@@ -31,30 +31,25 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.autodock.app.ui.theme.CyberBlue
-import com.autodock.app.ui.theme.DeepGraphite
-import com.autodock.app.ui.theme.GlassSurface
+import com.autodock.app.ui.theme.*
 import com.autodock.app.service.DockService
 import com.autodock.app.utils.HardwareMonitor
 import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
+import androidx.navigation.NavController
 import kotlinx.coroutines.delay
-
-// Expanded Palette for the new Mockup
-val DarkBackground = Color(0xFF03050B)
-val CardBackground = Color(0xFF0A0E17)
-val GlowBlue = Color(0xFF00F0FF)
-val GlowPurple = Color(0xFF7B2CBF)
-val NeonGreen = Color(0xFF00E676)
-val NeonRed = Color(0xFFFF1744)
-val Subtext = Color(0xFF6B7280)
+import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.combinedClickable
+import com.autodock.app.utils.SystemControls
+import android.app.AppOpsManager
 
 @Composable
-fun HomeScreen() {
+fun HomeScreen(navController: NavController) {
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
     var canDrawOverlays by remember { mutableStateOf(Settings.canDrawOverlays(context)) }
+    var hasUsageStats by remember { mutableStateOf(false) }
     
     val prefs = context.getSharedPreferences("AutoDockPrefs", Context.MODE_PRIVATE)
     var spotifyAuto by remember { mutableStateOf(prefs.getBoolean("spotify_auto", true)) }
@@ -87,6 +82,10 @@ fun HomeScreen() {
         val observer = LifecycleEventObserver { _, event ->
             if (event == Lifecycle.Event.ON_RESUME) {
                 canDrawOverlays = Settings.canDrawOverlays(context)
+                
+                val appOps = context.getSystemService(Context.APP_OPS_SERVICE) as AppOpsManager
+                val mode = appOps.checkOpNoThrow(AppOpsManager.OPSTR_GET_USAGE_STATS, android.os.Process.myUid(), context.packageName)
+                hasUsageStats = mode == AppOpsManager.MODE_ALLOWED
             }
         }
         lifecycleOwner.lifecycle.addObserver(observer)
@@ -97,7 +96,7 @@ fun HomeScreen() {
 
     Scaffold(
         containerColor = DarkBackground,
-        bottomBar = { CyberBottomNav() }
+        bottomBar = { CyberBottomNav(navController, "Dashboard") }
     ) { padding ->
         Column(
             modifier = Modifier
@@ -136,10 +135,16 @@ fun HomeScreen() {
             ControlCard(
                 icon = Icons.Rounded.Memory,
                 title = "INTELLIGENCE ENGINE",
-                status = "Active & Learning",
-                statusColor = GlowBlue,
-                buttonText = "AI SETTINGS",
-                onClick = {}
+                status = if (hasUsageStats) "Active & Learning" else "Needs Usage Access",
+                statusColor = if (hasUsageStats) GlowBlue else NeonRed,
+                buttonText = if (hasUsageStats) "AI SETTINGS" else "AUTHORIZE >",
+                onClick = {
+                    if (!hasUsageStats) {
+                        val intent = Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS)
+                        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                        context.startActivity(intent)
+                    }
+                }
             )
             Spacer(modifier = Modifier.height(24.dp))
             
@@ -262,6 +267,7 @@ fun ControlCard(icon: ImageVector, title: String, status: String, statusColor: C
 
 @Composable
 fun QuickActionsSection() {
+    val context = LocalContext.current
     Column {
         Text("QUICK ACTIONS", color = Subtext, fontSize = 10.sp, letterSpacing = 1.sp)
         Spacer(modifier = Modifier.height(12.dp))
@@ -269,25 +275,50 @@ fun QuickActionsSection() {
             modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
             horizontalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            QuickActionIcon(Icons.Rounded.Wifi, "Wi-Fi")
-            QuickActionIcon(Icons.Rounded.Bluetooth, "Bluetooth")
-            QuickActionIcon(Icons.Rounded.FlashlightOn, "Flashlight")
-            QuickActionIcon(Icons.Rounded.VolumeOff, "Silent Mode")
-            QuickActionIcon(Icons.Rounded.BatterySaver, "Battery Saver")
-            QuickActionIcon(Icons.Rounded.BrightnessAuto, "Auto Brightness")
+            QuickActionIcon(Icons.Rounded.Wifi, "Wi-Fi",
+                onClick = { SystemControls.openWifiSettings(context) },
+                onLongClick = { SystemControls.openWifiSettings(context) })
+            QuickActionIcon(Icons.Rounded.Bluetooth, "Bluetooth",
+                onClick = { SystemControls.openBluetoothSettings(context) },
+                onLongClick = { SystemControls.openBluetoothSettings(context) })
+            QuickActionIcon(Icons.Rounded.FlashlightOn, "Flashlight",
+                onClick = { SystemControls.toggleFlashlight(context) },
+                onLongClick = { })
+            QuickActionIcon(Icons.Rounded.VolumeOff, "Silent Mode",
+                onClick = { SystemControls.toggleSilentMode(context) },
+                onLongClick = { 
+                    val intent = Intent(Settings.ACTION_SOUND_SETTINGS)
+                    intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                    context.startActivity(intent) 
+                })
+            QuickActionIcon(Icons.Rounded.BatterySaver, "Battery Saver",
+                onClick = { SystemControls.openBatterySaverSettings(context) },
+                onLongClick = { SystemControls.openBatterySaverSettings(context) })
+            QuickActionIcon(Icons.Rounded.BrightnessAuto, "Auto Brightness",
+                onClick = { SystemControls.toggleAutoBrightness(context) },
+                onLongClick = { 
+                    val intent = Intent(Settings.ACTION_DISPLAY_SETTINGS)
+                    intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                    context.startActivity(intent) 
+                })
         }
     }
 }
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
-fun QuickActionIcon(icon: ImageVector, label: String) {
+fun QuickActionIcon(icon: ImageVector, label: String, onClick: () -> Unit, onLongClick: () -> Unit) {
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
         Box(
             modifier = Modifier
                 .size(50.dp)
                 .clip(CircleShape)
                 .background(Brush.radialGradient(listOf(GlowPurple.copy(alpha=0.4f), Color.Transparent)))
-                .border(1.dp, GlowPurple.copy(alpha=0.5f), CircleShape),
+                .border(1.dp, GlowPurple.copy(alpha=0.5f), CircleShape)
+                .combinedClickable(
+                    onClick = onClick,
+                    onLongClick = onLongClick
+                ),
             contentAlignment = Alignment.Center
         ) {
             Icon(icon, contentDescription = label, tint = GlowBlue)
@@ -367,17 +398,17 @@ fun AiPredictionSection() {
         }
         Spacer(modifier = Modifier.height(16.dp))
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-            AppPredictIcon("Spotify", GlowGreen = NeonGreen)
-            AppPredictIcon("Instagram", GlowGreen = Color(0xFFE1306C))
-            AppPredictIcon("YouTube", GlowGreen = NeonRed)
-            AppPredictIcon("Chrome", GlowGreen = Color(0xFFF4B400))
-            AppPredictIcon("WhatsApp", GlowGreen = NeonGreen)
+            AppPredictIcon("Spotify", "94%", GlowGreen = NeonGreen)
+            AppPredictIcon("Instagram", "82%", GlowGreen = Color(0xFFE1306C))
+            AppPredictIcon("YouTube", "75%", GlowGreen = NeonRed)
+            AppPredictIcon("Chrome", "60%", GlowGreen = Color(0xFFF4B400))
+            AppPredictIcon("WhatsApp", "42%", GlowGreen = NeonGreen)
         }
     }
 }
 
 @Composable
-fun AppPredictIcon(name: String, GlowGreen: Color) {
+fun AppPredictIcon(name: String, probability: String, GlowGreen: Color) {
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
         Box(
             modifier = Modifier.size(44.dp).clip(RoundedCornerShape(12.dp)).background(GlowGreen),
@@ -388,11 +419,12 @@ fun AppPredictIcon(name: String, GlowGreen: Color) {
         }
         Spacer(modifier = Modifier.height(8.dp))
         Text(name, color = Subtext, fontSize = 9.sp)
+        Text(probability, color = GlowBlue, fontSize = 8.sp, fontWeight = FontWeight.Bold)
     }
 }
 
 @Composable
-fun CyberBottomNav() {
+fun CyberBottomNav(navController: NavController, currentScreen: String) {
     Box(
         modifier = Modifier
             .fillMaxWidth()
@@ -406,8 +438,8 @@ fun CyberBottomNav() {
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            BottomNavItem(Icons.Rounded.Home, "Dashboard", true)
-            BottomNavItem(Icons.Rounded.Bolt, "Automations", false)
+            BottomNavItem(Icons.Rounded.Home, "Dashboard", currentScreen == "Dashboard") { navController.navigate("dashboard") }
+            BottomNavItem(Icons.Rounded.Bolt, "Automations", currentScreen == "Automations") { navController.navigate("automations") }
             
             // Center Floating Action Button (Dock)
             Box(
@@ -417,21 +449,22 @@ fun CyberBottomNav() {
                     .shadow(16.dp, CircleShape, spotColor = GlowBlue)
                     .clip(CircleShape)
                     .background(Brush.radialGradient(listOf(GlowBlue, Color(0xFF0055FF))))
-                    .border(2.dp, GlowBlue.copy(alpha=0.5f), CircleShape),
+                    .border(2.dp, GlowBlue.copy(alpha=0.5f), CircleShape)
+                    .clickable { /* Toggles Smart Hub (to be implemented) */ },
                 contentAlignment = Alignment.Center
             ) {
                 Icon(Icons.Rounded.Apps, contentDescription = "Dock", tint = Color.White, modifier = Modifier.size(28.dp))
             }
             
-            BottomNavItem(Icons.Rounded.GridView, "Dock", false)
-            BottomNavItem(Icons.Rounded.Settings, "Settings", false)
+            BottomNavItem(Icons.Rounded.GridView, "Dock", currentScreen == "Dock") { navController.navigate("dock") }
+            BottomNavItem(Icons.Rounded.Settings, "Settings", currentScreen == "Settings") { navController.navigate("settings") }
         }
     }
 }
 
 @Composable
-fun BottomNavItem(icon: ImageVector, label: String, selected: Boolean) {
-    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+fun BottomNavItem(icon: ImageVector, label: String, selected: Boolean, onClick: () -> Unit) {
+    Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.clickable { onClick() }) {
         Icon(icon, contentDescription = label, tint = if (selected) GlowBlue else Subtext, modifier = Modifier.size(24.dp))
         Spacer(modifier = Modifier.height(4.dp))
         Text(label, color = if (selected) GlowBlue else Subtext, fontSize = 9.sp)

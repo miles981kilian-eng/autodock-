@@ -33,36 +33,35 @@ class DockService : Service() {
         floatingView = FrameLayout(this).apply {
             val shape = GradientDrawable().apply {
                 shape = GradientDrawable.RECTANGLE
-                cornerRadius = 60f
-                setColor(android.graphics.Color.parseColor("#E60A0A0A")) // 90% opaque DeepGraphite
-                setStroke(4, android.graphics.Color.parseColor("#4400F0FF")) // Subtle neon blue border glow
+                cornerRadius = 80f
+                setColor(android.graphics.Color.parseColor("#CC0A0A0A")) // 80% opaque DeepGraphite
+                setStroke(2, android.graphics.Color.parseColor("#4400F0FF")) // Subtle neon blue border glow
             }
             background = shape
         }
 
-        // FLAG_HARDWARE_ACCELERATED is enabled by default for application overlay windows,
-        // but FLAG_SPLIT_TOUCH ensures multi-touch doesn't stutter on low-end devices.
         params = WindowManager.LayoutParams(
-            200, // Compact Width
-            200, // Compact Height
+            20, // Sleek vertical edge strip width
+            350, // Sleek vertical edge strip height
             WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,
             WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or WindowManager.LayoutParams.FLAG_WATCH_OUTSIDE_TOUCH or WindowManager.LayoutParams.FLAG_SPLIT_TOUCH,
             PixelFormat.TRANSLUCENT
         )
 
         params.gravity = Gravity.CENTER_VERTICAL or Gravity.END
-        params.x = 20
+        params.x = 0
         params.y = 0
 
         // Internal Layout
         val internalLayout = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
             gravity = Gravity.CENTER
+            setPadding(16, 16, 16, 16)
         }
 
         primaryIcon = TextView(this).apply {
-            text = "[]" // Monospace icon placeholder
-            setTextColor(android.graphics.Color.parseColor("#F0F0F0")) // TextPrimary
+            text = "" 
+            setTextColor(android.graphics.Color.parseColor("#F0F0F0")) 
             textSize = 24f
             typeface = android.graphics.Typeface.MONOSPACE
             gravity = Gravity.CENTER
@@ -102,12 +101,11 @@ class DockService : Service() {
                         return true
                     }
                     MotionEvent.ACTION_MOVE -> {
-                        // Pre-calculate to avoid object allocation during fast touch events
                         val dx = event.rawX - initialTouchX
                         val dy = event.rawY - initialTouchY
                         if (dx > 10 || dx < -10 || dy > 10 || dy < -10) {
                             isDragging = true
-                            params.x = initialX - dx.toInt() // End gravity inverted
+                            params.x = initialX - dx.toInt()
                             params.y = initialY + dy.toInt()
                             windowManager.updateViewLayout(floatingView, params)
                         }
@@ -127,26 +125,38 @@ class DockService : Service() {
 
     private fun toggleExpansion() {
         isExpanded = !isExpanded
-        val targetHeight = if (isExpanded) 600 else 200
+        val targetHeight = if (isExpanded) 700 else 350
+        val targetWidth = if (isExpanded) 600 else 20
 
-        // Futuristic smooth UI spring animation
-        val animator = ValueAnimator.ofInt(params.height, targetHeight)
-        animator.duration = 300
-        animator.interpolator = OvershootInterpolator(1.2f)
+        val initialHeight = params.height
+        val initialWidth = params.width
+
+        val animator = ValueAnimator.ofFloat(0f, 1f)
+        animator.duration = 400
+        animator.interpolator = OvershootInterpolator(1.1f)
         animator.addUpdateListener { animation ->
-            params.height = animation.animatedValue as Int
+            val fraction = animation.animatedValue as Float
+            params.height = (initialHeight + (targetHeight - initialHeight) * fraction).toInt()
+            params.width = (initialWidth + (targetWidth - initialWidth) * fraction).toInt()
+            
+            // Adjust X to ensure it stays anchored or expands inward
+            if (isExpanded) {
+                // Glow brighter when expanded
+                (floatingView.background as GradientDrawable).setStroke(4, android.graphics.Color.parseColor("#00F0FF"))
+            } else {
+                (floatingView.background as GradientDrawable).setStroke(2, android.graphics.Color.parseColor("#4400F0FF"))
+            }
+            
             windowManager.updateViewLayout(floatingView, params)
         }
         animator.start()
 
         if (isExpanded) {
-            primaryIcon.text = "[PREDICTIONS]"
-            primaryIcon.textSize = 12f
+            primaryIcon.text = "=== SMART HUB ===\n\n[ AI Predictions ]\n Spotify\n WhatsApp\n YouTube\n\n[ Mini Tools ]\n Calculator\n Notes"
+            primaryIcon.textSize = 14f
             primaryIcon.setTextColor(android.graphics.Color.parseColor("#00F0FF"))
         } else {
-            primaryIcon.text = "[]"
-            primaryIcon.textSize = 24f
-            primaryIcon.setTextColor(android.graphics.Color.parseColor("#F0F0F0"))
+            primaryIcon.text = ""
         }
     }
 

@@ -19,7 +19,14 @@ class MainActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
-                    HomeScreen()
+                    val navController = androidx.navigation.compose.rememberNavController()
+                    androidx.navigation.compose.NavHost(navController = navController, startDestination = "dashboard") {
+                        androidx.navigation.compose.composable("dashboard") { HomeScreen(navController) }
+                        androidx.navigation.compose.composable("automations") { com.autodock.app.ui.screens.AutomationsScreen(navController) }
+                        androidx.navigation.compose.composable("dock") { com.autodock.app.ui.screens.DockSettingsScreen(navController) }
+                        androidx.navigation.compose.composable("settings") { com.autodock.app.ui.screens.SettingsScreen(navController) }
+                        androidx.navigation.compose.composable("about") { com.autodock.app.ui.screens.AboutScreen(navController) }
+                    }
                 }
             }
         }
