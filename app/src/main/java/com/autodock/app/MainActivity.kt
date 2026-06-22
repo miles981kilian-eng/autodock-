@@ -29,6 +29,8 @@ class MainActivity : ComponentActivity() {
                         composable("dock") { com.autodock.app.ui.screens.DockSettingsScreen(navController) }
                         composable("settings") { com.autodock.app.ui.screens.SettingsScreen(navController) }
                         composable("about") { com.autodock.app.ui.screens.AboutScreen(navController) }
+                        composable("privacy_policy") { com.autodock.app.ui.screens.PrivacyPolicyScreen(navController) }
+                        composable("terms") { com.autodock.app.ui.screens.TermsOfServiceScreen(navController) }
                     }
                 }
             }

@@ -43,6 +43,7 @@ import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.combinedClickable
 import com.autodock.app.utils.SystemControls
 import android.app.AppOpsManager
+import coil.compose.AsyncImage
 
 @Composable
 fun HomeScreen(navController: NavController) {
@@ -106,7 +107,7 @@ fun HomeScreen(navController: NavController) {
                 .padding(16.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            TopAppBar()
+            TopAppBar(navController)
             Spacer(modifier = Modifier.height(24.dp))
             
             HeroStatusBanner()
@@ -161,13 +162,36 @@ fun HomeScreen(navController: NavController) {
 }
 
 @Composable
-fun TopAppBar() {
+fun TopAppBar(navController: NavController) {
+    var expanded by remember { mutableStateOf(false) }
     Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Icon(Icons.Rounded.Menu, contentDescription = "Menu", tint = GlowBlue, modifier = Modifier.size(28.dp))
+        Box {
+            IconButton(onClick = { expanded = true }) {
+                Icon(Icons.Rounded.Menu, contentDescription = "Menu", tint = GlowBlue, modifier = Modifier.size(28.dp))
+            }
+            DropdownMenu(
+                expanded = expanded,
+                onDismissRequest = { expanded = false },
+                modifier = Modifier.background(DarkBackground).border(1.dp, GlowBlue.copy(alpha=0.3f))
+            ) {
+                DropdownMenuItem(
+                    text = { Text("Privacy Policy", color = Color.White) },
+                    onClick = { expanded = false; navController.navigate("privacy_policy") }
+                )
+                DropdownMenuItem(
+                    text = { Text("Terms of Service", color = Color.White) },
+                    onClick = { expanded = false; navController.navigate("terms") }
+                )
+                DropdownMenuItem(
+                    text = { Text("About AutoDock", color = Color.White) },
+                    onClick = { expanded = false; navController.navigate("about") }
+                )
+            }
+        }
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
             Text("AUTODOCK OS", color = Color.White, fontSize = 20.sp, fontWeight = FontWeight.Black, letterSpacing = 2.sp)
             Text("SMART AUTOMATION SYSTEM", color = GlowBlue, fontSize = 9.sp, letterSpacing = 1.sp)
@@ -398,24 +422,43 @@ fun AiPredictionSection() {
         }
         Spacer(modifier = Modifier.height(16.dp))
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-            AppPredictIcon("Spotify", "94%", GlowGreen = NeonGreen)
-            AppPredictIcon("Instagram", "82%", GlowGreen = Color(0xFFE1306C))
-            AppPredictIcon("YouTube", "75%", GlowGreen = NeonRed)
-            AppPredictIcon("Chrome", "60%", GlowGreen = Color(0xFFF4B400))
-            AppPredictIcon("WhatsApp", "42%", GlowGreen = NeonGreen)
+            AppPredictIcon("Spotify", "94%", GlowGreen = NeonGreen, url = "https://logo.clearbit.com/spotify.com", packageName = "com.spotify.music")
+            AppPredictIcon("Instagram", "82%", GlowGreen = Color(0xFFE1306C), url = "https://logo.clearbit.com/instagram.com", packageName = "com.instagram.android")
+            AppPredictIcon("YouTube", "75%", GlowGreen = NeonRed, url = "https://logo.clearbit.com/youtube.com", packageName = "com.google.android.youtube")
+            AppPredictIcon("Chrome", "60%", GlowGreen = Color(0xFFF4B400), url = "https://logo.clearbit.com/google.com", packageName = "com.android.chrome")
+            AppPredictIcon("WhatsApp", "42%", GlowGreen = NeonGreen, url = "https://logo.clearbit.com/whatsapp.com", packageName = "com.whatsapp")
         }
     }
 }
 
 @Composable
-fun AppPredictIcon(name: String, probability: String, GlowGreen: Color) {
-    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+fun AppPredictIcon(name: String, probability: String, GlowGreen: Color, url: String, packageName: String) {
+    val context = LocalContext.current
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        modifier = Modifier.clickable {
+            try {
+                val intent = context.packageManager.getLaunchIntentForPackage(packageName)
+                if (intent != null) {
+                    context.startActivity(intent)
+                } else {
+                    val webIntent = Intent(Intent.ACTION_VIEW, Uri.parse("https://play.google.com/store/apps/details?id=$packageName"))
+                    context.startActivity(webIntent)
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+        }
+    ) {
         Box(
             modifier = Modifier.size(44.dp).clip(RoundedCornerShape(12.dp)).background(GlowGreen),
             contentAlignment = Alignment.Center
         ) {
-            // Stand-in for actual app icons
-            Text(name.take(1), color = Color.White, fontWeight = FontWeight.Bold)
+            AsyncImage(
+                model = url,
+                contentDescription = name,
+                modifier = Modifier.fillMaxSize().padding(8.dp)
+            )
         }
         Spacer(modifier = Modifier.height(8.dp))
         Text(name, color = Subtext, fontSize = 9.sp)

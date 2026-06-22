@@ -85,3 +85,69 @@ fun AboutScreen(navController: NavController) {
         }
     }
 }
+
+@Composable
+fun PrivacyPolicyScreen(navController: NavController) {
+    Box(modifier = Modifier.fillMaxSize().background(DarkBackground).padding(24.dp)) {
+        Column(modifier = Modifier.fillMaxSize()) {
+            Spacer(modifier = Modifier.height(24.dp))
+            Text("PRIVACY POLICY", color = GlowBlue, fontSize = 24.sp, fontWeight = FontWeight.Bold, letterSpacing = 2.sp)
+            Spacer(modifier = Modifier.height(16.dp))
+            
+            // Scrollable content
+            Column(modifier = Modifier.weight(1f).verticalScroll(androidx.compose.foundation.rememberScrollState())) {
+                Text("Last Updated: June 2026", color = Subtext, fontSize = 12.sp)
+                Spacer(modifier = Modifier.height(16.dp))
+                
+                Text("1. Information We Collect", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                Text("AutoDock collects usage statistics to power the Intelligence Engine and predict your next actions. We only collect the minimal required data (such as app usage frequency and device state like Bluetooth/Wi-Fi connection status).", color = Subtext, fontSize = 14.sp)
+                Spacer(modifier = Modifier.height(12.dp))
+                
+                Text("2. How We Use Your Information", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                Text("The information collected is strictly processed locally on your device to trigger automated workflows and is never sold or shared with third parties.", color = Subtext, fontSize = 14.sp)
+                Spacer(modifier = Modifier.height(12.dp))
+                
+                Text("3. Permissions", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                Text("AutoDock requires the 'Display over other apps' permission to show the floating smart dock, and 'Usage Access' to analyze which apps to suggest next.", color = Subtext, fontSize = 14.sp)
+                Spacer(modifier = Modifier.height(24.dp))
+            }
+            
+            Button(onClick = { navController.popBackStack() }, colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent), modifier = Modifier.align(Alignment.CenterHorizontally)) {
+                Text("< BACK", color = GlowBlue)
+            }
+        }
+    }
+}
+
+@Composable
+fun TermsOfServiceScreen(navController: NavController) {
+    Box(modifier = Modifier.fillMaxSize().background(DarkBackground).padding(24.dp)) {
+        Column(modifier = Modifier.fillMaxSize()) {
+            Spacer(modifier = Modifier.height(24.dp))
+            Text("TERMS OF SERVICE", color = GlowBlue, fontSize = 24.sp, fontWeight = FontWeight.Bold, letterSpacing = 2.sp)
+            Spacer(modifier = Modifier.height(16.dp))
+            
+            // Scrollable content
+            Column(modifier = Modifier.weight(1f).verticalScroll(androidx.compose.foundation.rememberScrollState())) {
+                Text("Last Updated: June 2026", color = Subtext, fontSize = 12.sp)
+                Spacer(modifier = Modifier.height(16.dp))
+                
+                Text("1. Acceptance of Terms", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                Text("By downloading and using AutoDock, you agree to these Terms of Service. If you do not agree, please uninstall the application.", color = Subtext, fontSize = 14.sp)
+                Spacer(modifier = Modifier.height(12.dp))
+                
+                Text("2. Use of Application", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                Text("AutoDock is provided 'as is' for personal use. You may not reverse-engineer, distribute, or misuse the software in a way that disrupts device stability.", color = Subtext, fontSize = 14.sp)
+                Spacer(modifier = Modifier.height(12.dp))
+                
+                Text("3. Limitation of Liability", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                Text("The developer, Kilian Ochieng, shall not be held liable for any damages or data loss resulting from the automated actions or usage of the application.", color = Subtext, fontSize = 14.sp)
+                Spacer(modifier = Modifier.height(24.dp))
+            }
+            
+            Button(onClick = { navController.popBackStack() }, colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent), modifier = Modifier.align(Alignment.CenterHorizontally)) {
+                Text("< BACK", color = GlowBlue)
+            }
+        }
+    }
+}
