@@ -36,17 +36,8 @@ jobs:
       - name: Build Debug APK (Installable)
         run: gradle assembleDebug
 
-      - name: Build Release APK (Unsigned)
-        run: gradle assembleRelease
-
-      - name: Upload Debug APK
+      - name: Upload Installable APK
         uses: actions/upload-artifact@v4
         with:
-          name: AutoDock-Debug-APK
+          name: AutoDock-Installable-APK
           path: app/build/outputs/apk/debug/app-debug.apk
-
-      - name: Upload Release APK
-        uses: actions/upload-artifact@v4
-        with:
-          name: AutoDock-Release-Unsigned-APK
-          path: app/build/outputs/apk/release/app-release-unsigned.apk
